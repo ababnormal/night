@@ -1,28 +1,33 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
-const BASE = 'http://localhost:4000/api';
+import api from './api';
+import Login from './Login';
 
 function App() {
   const [list, setList] = useState([]);
+  const [authed, setAuthed] = useState(false);
+
   const fetchData = async () => {
-    const { data } = await axios.get(`${BASE}/candidates`);
+    const { data } = await api.get('/candidates');
     setList(data);
   };
   useEffect(() => { fetchData(); }, []);
 
   const vote = async (id) => {
     try {
-      await axios.post(`${BASE}/vote`, { candidateId: id }, { withCredentials: true });
+      await api.post('/vote', { candidateId: id });
       fetchData();
     } catch (e) {
       alert(e.response?.data?.error || 'error');
     }
   };
 
+  if (!authed) return <Login onLogin={() => setAuthed(true)} />;
+
   const total = list.reduce((a, b) => a + b.votes, 0) || 1;
   return (
     <div style={{ padding: 40 }}>
       <h1>最简电子投票</h1>
+      <button onClick={() => { document.cookie = 'token=;Max-Age=0'; setAuthed(false); }}>退出</button>
       {list.map((c) => (
         <div key={c.id} style={{ marginBottom: 20 }}>
           <h3>{c.name}</h3>
